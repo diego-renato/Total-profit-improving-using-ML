@@ -84,7 +84,7 @@ test1 = test1.loc[:,test1.isnull().sum()/len(test1)<0.4]
 test1 = test1.loc[:,train1.isnull().sum()/len(train1)<0.4] ## descartamos las variables que tienen mas de 40% NaN
 train1 = train1.loc[:,train1.isnull().sum()/len(train1)<0.4]
 
-# imputation by mes
+# imputation using mean, median by mounth
 
 columnas = train1.loc[:,(train1.isnull().sum()!=0)].columns
 for j in [201901,201902,201903,201904,201905,201906,201907]:
@@ -116,51 +116,64 @@ test1.drop(correlated_features,axis=1,inplace=True)
 ### Feature selection using feature importance
 
 from lightgbm import LGBMClassifier
-from sklearn.metrics import f1_score
-#from lightgbm import LGBMClassifier
-# scipy.optimize import differential_evolution
 drop_cols = ["codmes"]
-#variables = var.index 
 fi = []
-test_probs = []
-train_probs = []
 for mes in [201901,201902,201903]:
         print("*"*10, mes, "*"*10)
         Xt = train1[train1.codmes <= mes]
         Xt = Xt[Xt.codmes != 201904]
         yt = y_train.loc[Xt.index, "codtarget"]
         Xt = Xt.drop(drop_cols, axis=1)
-        #Xt = Xt.loc[:,variables]
-    
+          
         Xv = train1[train1.codmes > mes]
-        #Xv = Xv.loc[:,variables]
         yv = y_train.loc[Xv.index, "codtarget"]
              
                 
         learner = LGBMClassifier(n_estimators=10000,learning_rate=0.09,num_iterations=1000,lambda_l2 =5,
                                  lambda_l1 =12,num_leaves =8,max_depth=3,min_data_in_leaf =800)
         learner.fit(Xt, yt  , eval_metric="auc",eval_set= [(Xt, yt),(Xv.drop(drop_cols, axis=1), yv)], verbose=50,early_stopping_rounds=70)
-        train_probs.append(pd.Series(learner.predict_proba(Xv.drop(drop_cols, axis=1))[:, -1],
-                                index=Xv.index, name="probs"+ str(mes)))
-        est = pd.Series(learner.predict(Xv.drop(drop_cols, axis=1)))
-        est2 = pd.Series(learner.predict(Xt))
-        print("F1-score validation:",round(f1_score(yv, est),3))
-        print("F1-score train:",round(f1_score(yt, est2),3))
-   
-        test_probs.append(pd.Series(learner.predict_proba(test1.drop(drop_cols, axis=1))[:, -1],
-                                index=test1.index, name="fold_" + str(mes)  ))
         fi.append(pd.Series(learner.feature_importances_ / learner.feature_importances_.sum(), index=Xt.columns))
     
 
-test_probs = pd.concat(test_probs, axis=1).max(axis=1)
-train_probs = pd.concat(train_probs, axis=1).max(axis=1)
 fi = pd.concat(fi, axis=1).mean(axis=1)
 
 var = fi.sort_values().tail(90).to_frame().index 
-var 
 
 train2 = train1[var].join(train1.codmes)
 test2 = test1[var].join(test1.codmes)
 
+#######################################################
+######## Model using lightGBM framework ###############
+#######################################################
+from sklearn.model_selection import StratifiedKFold
+kf = StratifiedKFold(n_splits=5,shuffle=True,random_state=123)
 
+drop_cols = ["codmes"]
+test_probs = []
+train_probs = []
+for i,(a,b) in enumerate(kf.split(train2,y_train.loc[train.index, "target"])) :
+        print("*+*+*+*+*entrenando fold: {} ".format(i+1))
+        Xt = train2.iloc[a,:]
+        yt = y_train.loc[Xt.index, "target"]
+        Xt = Xt.drop(drop_cols, axis=1)
+        Xv = train2.iloc[b,:]
+        yv = y_train.loc[Xv.index, "target"]
+    
+        learner = LGBMClassifier(n_estimators=10,learning_rate=0.09,num_iterations=1000,lambda_l2=1 ,lambda_l1 =4
+                                 ,num_leaves =7,max_depth=5,min_data_in_leaf =500,early_stopping_rounds=70)
+        learner.fit(Xt, yt  , eval_metric="auc",eval_set= [(Xt, yt),(Xv.drop(drop_cols, axis=1), yv)], verbose=50)
+        train_probs.append(pd.Series(learner.predict_proba(Xv.drop(drop_cols, axis=1))[:, -1],
+                                index=Xv.index, name="probs"+ str(mes)))
+        est = pd.Series(learner.predict(Xv.drop(drop_cols, axis=1)))
+        est2 = pd.Series(learner.predict(Xt))
+        print("F1-score validation:",f1_score(yv, est))
+        print("F1-score train:",f1_score(yt, est2))
+        test_probs.append(pd.Series(learner.predict_proba(test2.drop(drop_cols, axis=1))[:, -1],
+                                index=test2.index, name="fold_" + str(mes)  ))
+        
+    #y_train = y_train.join(train_probs)
+    #optimization = differential_evolution(lambda c: -((y_train.loc[y_train.codmes!=mes,["probs"+ str(mes)]] > c[0]) * y_train.margen[y_train.codmes!=mes] / y_train.margen[y_train.codmes!=mes].sum()).sum(), [(0, 0.1)])
+    #(( ((y_train.loc[y_train.codmes!=mes,["probs"+ str(mes)]]> optimization["x"][0]) * y_train.margen[y_train.codmes!=mes] / y_train.margen[y_train.codmes!=mes].sum()).sum()) )
 
+test_probs = pd.concat(test_probs, axis=1).mean(axis=1)
+train_probs = pd.concat(train_probs, axis=1).mean(axis=1)
