@@ -4,7 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder,LabelEncoder
 
-campanias = pd.read_csv('ib_base_campanias.csv')
+link = '/kaggle/input/interbank-internacional-2019/'
+campanias = pd.read_csv(link+'ib_base_campanias/ib_base_campanias.csv')
 
 camp_canal = campanias.groupby(["codmes", "id_persona", "canal_asignado"]).size().unstack(level=2, fill_value=0).reset_index().set_index("codmes").sort_index().astype("int32")
 camp_prod = campanias.groupby(["codmes", "id_persona", "producto"]).size().unstack(level=2, fill_value=0).reset_index().set_index("codmes").sort_index().astype("int32")
