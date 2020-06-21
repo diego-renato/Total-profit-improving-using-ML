@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder,LabelEncoder
+from scipy.optimize import differential_evolution
 
 link = '/kaggle/input/interbank-internacional-2019/'
 train = pd.read_csv(link+"ib_base_inicial_train/ib_base_inicial_train.csv")
@@ -171,9 +172,11 @@ for i,(a,b) in enumerate(kf.split(train2,y_train.loc[train.index, "target"])) :
         test_probs.append(pd.Series(learner.predict_proba(test2.drop(drop_cols, axis=1))[:, -1],
                                 index=test2.index, name="fold_" + str(mes)  ))
         
-    #y_train = y_train.join(train_probs)
-    #optimization = differential_evolution(lambda c: -((y_train.loc[y_train.codmes!=mes,["probs"+ str(mes)]] > c[0]) * y_train.margen[y_train.codmes!=mes] / y_train.margen[y_train.codmes!=mes].sum()).sum(), [(0, 0.1)])
-    #(( ((y_train.loc[y_train.codmes!=mes,["probs"+ str(mes)]]> optimization["x"][0]) * y_train.margen[y_train.codmes!=mes] / y_train.margen[y_train.codmes!=mes].sum()).sum()) )
-
 test_probs = pd.concat(test_probs, axis=1).mean(axis=1)
 train_probs = pd.concat(train_probs, axis=1).mean(axis=1)
+
+#cut off estimated
+y_train = y_train.join(train_probs.rename("probs"))
+optimization = differential_evolution(lambda c: -((y_train.probs > c[0]) * y_train.margen / y_train.margen.sum()).sum(), [(0, 1)])
+optimization
+
