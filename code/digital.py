@@ -4,7 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder,LabelEncoder
 
-digital = pd.read_csv("ib_base_digital.csv")
+link = '/kaggle/input/interbank-internacional-2019/'
+digital = pd.read_csv(link+"ib_base_digital/ib_base_digital.csv")
 digital["codmes"] = (digital.codday/100).astype(int)
 
 numero_arribadas = ['benefit','email','facebook','goog','youtb','compb']
