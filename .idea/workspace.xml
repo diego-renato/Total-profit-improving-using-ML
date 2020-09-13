@@ -19,9 +19,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6faae9d4-5539-4a30-b525-267b865cb2f9" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/code/campanias_treatment.py" beforeDir="false" afterPath="$PROJECT_DIR$/code/campanias_treatment.py" afterDir="false" />
-    </list>
+    <list default="true" id="6faae9d4-5539-4a30-b525-267b865cb2f9" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -99,6 +97,7 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
     <state x="392" y="0" key="#campanias_treatment" timestamp="1599440331212">
