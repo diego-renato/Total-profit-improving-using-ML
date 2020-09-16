@@ -1,11 +1,10 @@
 import pandas as pd
-import numpy as np
 import click
 import gc
 
 @click.command()
 @click.option('--dataset', type=click.Path(exists=True))
-def get_dataset(dataset: str):
+def get_campanias(dataset: str):
 
     campanias = pd.read_csv(dataset)
 
@@ -44,4 +43,4 @@ def get_dataset(dataset: str):
     complementos.to_csv("final_campanias.csv", header=True)
 
 if __name__ == '__main__':
-    get_dataset()
+    get_campanias()

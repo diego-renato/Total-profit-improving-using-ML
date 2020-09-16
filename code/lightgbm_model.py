@@ -1,8 +1,4 @@
 import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import OneHotEncoder,LabelEncoder
 from scipy.optimize import differential_evolution
 
 link = '/kaggle/input/interbank-internacional-2019/'
